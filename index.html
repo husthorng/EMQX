@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP32 D13 MQTT Control</title>
+  <!-- Load MQTT.js via CDN -->
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f4f4f9;
+    }
+    .card {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 300px;
+    }
+    #status {
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+      font-weight: bold;
+      color: #d9534f;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      font-size: 1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.85; }
+    .btn-on { background-color: #28a745; color: white; }
+    .btn-off { background-color: #dc3545; color: white; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>ESP32 GPIO 13</h2>
+    <div id="status">Disconnected</div>
+    <button class="btn-on" onclick="sendCommand('ON')">Turn ON</button>
+    <button class="btn-off" onclick="sendCommand('OFF')">Turn OFF</button>
+  </div>
+
+  <script>
+    // Must match the topic in your ESP32 code
+    const topic = "esp32/led13/control/led13";
+    
+    // Connect to EMQX Public Broker via Secure WebSockets (WSS)
+    const brokerUrl = "wss://broker.emqx.io:8084/mqtt";
+    const clientId = "WebClient-" + Math.random().toString(16).substr(2, 8);
+
+    const statusEl = document.getElementById("status");
+    const client = mqtt.connect(brokerUrl, { clientId: clientId });
+
+    client.on("connect", () => {
+      statusEl.textContent = "Connected to EMQX";
+      statusEl.style.color = "#28a745";
+    });
+
+    client.on("error", (err) => {
+      statusEl.textContent = "Connection Error";
+      statusEl.style.color = "#d9534f";
+      console.error(err);
+    });
+
+    function sendCommand(cmd) {
+      if (client.connected) {
+        client.publish(topic, cmd);
+        console.log(`Published "${cmd}" to ${topic}`);
+      } else {
+        alert("Not connected to MQTT broker yet.");
+      }
+    }
+  </script>
+
+</body>
+</html>
